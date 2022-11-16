@@ -154,7 +154,7 @@ for i, track in enumerate(five_rand_tracks, start=1):
     print(f"Currently Downloading Track {i}: {track}")
 
     # Obtain the YouTube link of each of the five tracks
-    videosSearch = VideosSearch(track, limit=1)
+    videosSearch = VideosSearch(f"{track} audio", limit=1)
     results_obj = videosSearch.result()
     yt_video = results_obj["result"][0]
     yt_link = yt_video["link"]
