@@ -5,17 +5,14 @@ import httplib2
 import os
 import random
 import time
-
-# import google.oauth2.credentials
-# import google_auth_oauthlib.flow
+import pickle
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request 
 
-
-# Explicitly tell the underlying HTTP transport library not to retry, since
-# we are handling retry logic ourselves.
+# Explicitly tell the underlying HTTP transport library not to retry, since we are handling retry logic ourselves.
 httplib2.RETRIES = 1
 
 # Maximum number of times to retry before giving up.
@@ -27,24 +24,12 @@ RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError, client.NotConnected,
                         client.CannotSendRequest, client.CannotSendHeader,
                         client.ResponseNotReady, client.BadStatusLine)
 
-# Always retry when an apiclient.errors.HttpError with one of these status
-# codes is raised.
+# Always retry when an apiclient.errors.HttpError with one of these status codes is raised.
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
-# The CLIENT_SECRETS_FILE variable specifies the name of a file that contains
-# the OAuth 2.0 information for this application, including its client_id and
-# client_secret. You can acquire an OAuth 2.0 client ID and client secret from
-# the {{ Google Cloud Console }} at
-# {{ https://cloud.google.com/console }}.
-# Please ensure that you have enabled the YouTube Data API for your project.
-# For more information about using OAuth2 to access the YouTube Data API, see:
-#   https://developers.google.com/youtube/v3/guides/authentication
-# For more information about the client_secrets.json file format, see:
-#   https://developers.google.com/api-client-library/python/guide/aaa_client_secrets
 CLIENT_SECRETS_FILE = 'client_secret.json'
 
-# This OAuth 2.0 access scope allows an application to upload files to the
-# authenticated user's YouTube channel, but doesn't allow other types of access.
+#youtube access
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
@@ -52,14 +37,39 @@ API_VERSION = 'v3'
 VALID_PRIVACY_STATUSES = ('public', 'private', 'unlisted')
 
 
-# Authorize the request and store authorization credentials.
-def get_authenticated_service():
-    flow = InstalledAppFlow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, SCOPES)
-    credentials = flow.run_console()
-    return build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
+#YOUTUBE AUTHENICATION
+credentials = None 
 
+# token.pickle stores the user's credentials from previously successful logins, loads in credentials if it already exists
+if os.path.exists('token.pickle'):
+    print("Loading Credentials From File...")
+    with open('token.pickle', 'rb') as token:
+        credentials = pickle.load(token)
 
+# If there are no valid credentials available, then either refresh the token or log in.
+if not credentials or not credentials.valid:
+    if credentials and credentials.expired and credentials.refresh_token:
+        print('Refreshing Access Token...')
+        credentials.refresh(Request())
+    else:
+        print('Fetching New Tokens...')
+        flow = InstalledAppFlow.from_client_secrets_file(
+            'client_secret.json',
+            scopes=[
+                'https://www.googleapis.com/auth/youtube.upload'
+            ]
+        )
+
+        flow.run_local_server(
+            port=8080, prompt='consent', authorization_prompt_message='')
+        credentials = flow.credentials
+
+        # Save the credentials for the next run
+        with open('token.pickle', 'wb') as f:
+            print('Saving Credentials for Future Use...')
+            pickle.dump(credentials, f)
+
+#YOUTUBE UPLOAD 
 def initialize_upload(youtube, options):
     tags = None
     if options.keywords:
@@ -97,9 +107,6 @@ def initialize_upload(youtube, options):
 
     resumable_upload(insert_request)
 
-# This method implements an exponential backoff strategy to resume a
-# failed upload.
-
 
 def resumable_upload(request):
     response = None
@@ -121,7 +128,7 @@ def resumable_upload(request):
                                                                      e.content)
             else:
                 raise
-        except [RETRIABLE_EXCEPTIONS, e]:
+        except RETRIABLE_EXCEPTIONS as e:
             error = 'A retriable error occurred: %s' % e
 
         if error is not None:
@@ -139,21 +146,22 @@ def resumable_upload(request):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', required=True, help='Video file to upload')
-    parser.add_argument('--title', help='Video title', default='Test Title')
+    parser.add_argument('--title', help='Video title', default='Test Title - Mewzaki')
     parser.add_argument('--description', help='Video description',
                         default='Test Description')
-    parser.add_argument('--category', default='22',
+    parser.add_argument('--category', default='10',
                         help='Numeric video category. ' +
                         'See https://developers.google.com/youtube/v3/docs/videoCategories/list')
     parser.add_argument('--keywords', help='Video keywords, comma separated',
-                        default='')
+                        default='music, lofi')
     parser.add_argument('--privacyStatus', choices=VALID_PRIVACY_STATUSES,
                         default='private', help='Video privacy status.')
     args = parser.parse_args()
 
-    youtube = get_authenticated_service()
+    youtube = build(API_SERVICE_NAME, API_VERSION, credentials=credentials)
 
     try:
         initialize_upload(youtube, args)
     except HttpError as e:
-        print('An HTTP error %d occurred:\n%s' % (e.resp.status, e.content))
+        print('An HTTP error %d occurred:\n%s' % e.resp.status, e.content)
+
