@@ -5,7 +5,6 @@ from random import randrange
 
 # To complete YouTube search
 from youtubesearchpython import VideosSearch
-import pprint
 
 # For downloading mp3s
 # import youtube_dl
@@ -170,7 +169,8 @@ sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
 # Global Top Songs URI
 # PLAYLIST_URI = "37i9dQZEVXbNG2KDcFcKOF"
-PLAYLIST_URI = "56j8LKCvUH4kyEHHQW5Dge"
+# PLAYLIST_URI = "56j8LKCvUH4kyEHHQW5Dge"
+PLAYLIST_URI = "1tK3uHXK80UfIOjPdDxkiQ"
 track_uris = [x["track"]["uri"]
               for x in sp.playlist_tracks(PLAYLIST_URI)["items"]]  # List of track URIs
 # print(track_uris)
@@ -208,12 +208,13 @@ for track in sp.playlist_tracks(PLAYLIST_URI)["items"]:
 
 for i, track in enumerate(top_fifty_tracks, start=1):
     print(f"Track {i}: {track}")
+    five_rand_tracks.append(track)
 print("\n")
 
-for i in range(1, 6):
-    rand_track = top_fifty_tracks.pop(randrange(len(top_fifty_tracks)))
-    five_rand_tracks.append(rand_track)
-print("\n")
+# for i in range(1, 6):
+#     rand_track = top_fifty_tracks.pop(randrange(len(top_fifty_tracks)))
+#     five_rand_tracks.append(rand_track)
+# print("\n")
 
 # FOR TESTING PURPOSES:
 # five_rand_tracks.append("anti-hero-by-taylor-swift")
@@ -223,6 +224,12 @@ print("\n")
 # five_rand_tracks.append("pussy-millions-feat-travis-scott-by-drake")
 # five_rand_tracks.append("not-the-only-one-by-sam-smith")
 # five_rand_tracks.append("too-good-at-goodbyes-by-sam-smith")
+# five_rand_tracks.append("stereo-hearts-by-gym-class-heroes")
+# five_rand_tracks.append("positions-by-ariana-grande")
+# five_rand_tracks.append("4-your-eyes-only-by-j.cole")
+# five_rand_tracks.append("snakes-by-joey-badass")
+# five_rand_tracks.append("humble-by-kendrick-lamar")
+# five_rand_tracks.append("doomsday-by-mf-doom")
 
 
 print("CHOSEN 5 TRACKS: ")
@@ -279,23 +286,17 @@ print("\n")
 
 # Slow vocals accordingly
 print("Slowing vocals...")
-lofi_beat = AudioSegment.from_file("../beats_library/85BPM.mp3") - 8
-beat_bpm = 85
+lofi_beat = (AudioSegment.from_file("../beats_library/75BPM.mp3") * 10) - 3
+beat_bpm = 75
 for track in tracks_data_struct:
-    vocals = AudioSegment.from_file(f"./{track}/vocals.wav")
+    vocals = AudioSegment.from_file(f"./{track}/vocals.wav") - 15
     song_bpm = tracks_data_struct[track]["bpm"]
 
     # Slow the vocals to achieve the same bpm as the beat
     slow_vocals = speed_change(vocals, beat_bpm / song_bpm)
     slow_vocals.export(f"./{track}/slow_vocals.mp3", format="mp3")
 
-    # Pitch down slow_vocals.mp3 to create slow_and_low_vocals.mp3 using command line
-    os.system(
-        f"ffmpeg -i ./{track}/slow_vocals.mp3 -af asetrate=44100*0.7,aresample=44100,atempo=1/0.7 ./{track}/slow_and_low_vocals.mp3")
-    slow_and_low_vocals = AudioSegment.from_file(
-        f"./{track}/slow_and_low_vocals.mp3")
-
     # Create the track by overlaying the beat over the slow vocals
-    #### EDITED HERE ####
     lofi_track = slow_vocals.overlay(lofi_beat, position=0)
-    lofi_track.export(f"./{track}/final_lofi.mp3", format="mp3")
+    lofi_track = lofi_track.fade_in(1000).fade_out(3000)
+    lofi_track.export(f"./{track}/{track}.mp3", format="mp3")
