@@ -1,7 +1,8 @@
 # To query Spotify using Spotify API
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
-from random import randrange
+
+import random
 
 # To complete YouTube search
 from youtubesearchpython import VideosSearch
@@ -167,12 +168,24 @@ client_credentials_manager = SpotifyClientCredentials(
     client_id=cid, client_secret=secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
-# Global Top Songs URI
-# PLAYLIST_URI = "37i9dQZEVXbNG2KDcFcKOF"
-# PLAYLIST_URI = "56j8LKCvUH4kyEHHQW5Dge"
-PLAYLIST_URI = "1tK3uHXK80UfIOjPdDxkiQ"
+# Spotify Playlist URIs
+TOP_50_URI = "37i9dQZEVXbNG2KDcFcKOF"
+FONI_URI = "56j8LKCvUH4kyEHHQW5Dge"
+LYRICAL_RAP_URI = "1tK3uHXK80UfIOjPdDxkiQ"
+EIGHTY_BPM_URI = "2Cxy4eFOnkDpWA7je1VIAZ"
+JAZZ_RAP_URI = "37i9dQZF1DX8Kgdykz6OKj"
+
+CURRENT_PLAYLIST_URI = JAZZ_RAP_URI
+
+# Beats Library
+beats_library = {
+    "60BPM": {"file_name": "60BPM.mp3", "bpm": 60},
+    "75BPM": {"file_name": "75BPM.mp3", "bpm": 75},
+    "85BPM": {"file_name": "85BPM.mp3", "bpm": 85},
+}
+
 track_uris = [x["track"]["uri"]
-              for x in sp.playlist_tracks(PLAYLIST_URI)["items"]]  # List of track URIs
+              for x in sp.playlist_tracks(CURRENT_PLAYLIST_URI)["items"]]  # List of track URIs
 # print(track_uris)
 # print("\n\n")
 
@@ -180,7 +193,7 @@ top_fifty_tracks = []
 five_rand_tracks = []
 tracks_data_struct = {}
 
-for track in sp.playlist_tracks(PLAYLIST_URI)["items"]:
+for track in sp.playlist_tracks(CURRENT_PLAYLIST_URI)["items"]:
 
     # Track name
     # print(track["track"])
@@ -208,29 +221,20 @@ for track in sp.playlist_tracks(PLAYLIST_URI)["items"]:
 
 for i, track in enumerate(top_fifty_tracks, start=1):
     print(f"Track {i}: {track}")
-    five_rand_tracks.append(track)
 print("\n")
 
-# for i in range(1, 6):
-#     rand_track = top_fifty_tracks.pop(randrange(len(top_fifty_tracks)))
-#     five_rand_tracks.append(rand_track)
-# print("\n")
+for i in range(1, 6):
+    rand_track = top_fifty_tracks.pop(random.randrange(len(top_fifty_tracks)))
+    five_rand_tracks.append(rand_track)
+print("\n")
 
 # FOR TESTING PURPOSES:
-# five_rand_tracks.append("anti-hero-by-taylor-swift")
-# five_rand_tracks.append("rich-flex-by-drake")
-# five_rand_tracks.append("unholy-feat-kim-petras-by-sam-smith")
-# five_rand_tracks.append("major-distribution-by-drake")
-# five_rand_tracks.append("pussy-millions-feat-travis-scott-by-drake")
 # five_rand_tracks.append("not-the-only-one-by-sam-smith")
 # five_rand_tracks.append("too-good-at-goodbyes-by-sam-smith")
 # five_rand_tracks.append("stereo-hearts-by-gym-class-heroes")
 # five_rand_tracks.append("positions-by-ariana-grande")
 # five_rand_tracks.append("4-your-eyes-only-by-j.cole")
-# five_rand_tracks.append("snakes-by-joey-badass")
-# five_rand_tracks.append("humble-by-kendrick-lamar")
 # five_rand_tracks.append("doomsday-by-mf-doom")
-
 
 print("CHOSEN 5 TRACKS: ")
 for i, track in enumerate(five_rand_tracks, start=1):
@@ -284,10 +288,15 @@ for track in tracks_data_struct:
 print(tracks_data_struct)
 print("\n")
 
+# Select a beat...
+chosen_beat = random.choice(list(beats_library.keys()))
+print(f"Selected beat: {beats_library[chosen_beat]['file_name']}")
+lofi_beat = (AudioSegment.from_file(
+    f"../beats_library/{beats_library[chosen_beat]['file_name']}") * 10) - 3
+beat_bpm = beats_library[chosen_beat]['bpm']
+
 # Slow vocals accordingly
 print("Slowing vocals...")
-lofi_beat = (AudioSegment.from_file("../beats_library/75BPM.mp3") * 10) - 3
-beat_bpm = 75
 for track in tracks_data_struct:
     vocals = AudioSegment.from_file(f"./{track}/vocals.wav") - 15
     song_bpm = tracks_data_struct[track]["bpm"]
@@ -299,4 +308,5 @@ for track in tracks_data_struct:
     # Create the track by overlaying the beat over the slow vocals
     lofi_track = slow_vocals.overlay(lofi_beat, position=0)
     lofi_track = lofi_track.fade_in(1000).fade_out(3000)
-    lofi_track.export(f"./{track}/{track}.mp3", format="mp3")
+    lofi_track.export(
+        f"./{track}/if {track.replace('-',' ')} was lofi.mp3", format="mp3")
