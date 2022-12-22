@@ -27,6 +27,12 @@ from numpy import median, diff
 # Vocal manipulations
 from pydub import AudioSegment
 
+# Combine audio with background video
+import moviepy.editor as mpe
+
+OUTRO_TIME_IN_SECONDS = 5
+FPS = 60
+
 
 class MyLogger(object):
     def debug(self, msg):
@@ -42,21 +48,6 @@ class MyLogger(object):
 def my_hook(d):
     if d['status'] == 'finished':
         print('Done downloading, now converting ...')
-
-
-# The video download settings/options
-ydl_opts = {
-    'format': 'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'wav',
-        'preferredquality': '192',
-    }],
-    'logger': MyLogger(),
-    'progress_hooks': [my_hook],
-    'outtmpl': 'audio_files/%(id)s.%(ext)s',
-    # 'writeinfojson' # Use this if we want to write to a JSON and store it in a database
-}
 
 
 def download_audio(yt_url):
@@ -159,6 +150,29 @@ def speed_change(sound, speed=1.0):
     return sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
 
 
+def combine_audio_and_video(vid_path, aud_path, out_path, fps=FPS):
+    audio_background = mpe.AudioFileClip(aud_path)
+    audio_duration = audio_background.duration + OUTRO_TIME_IN_SECONDS
+    my_clip = mpe.VideoFileClip(vid_path)
+    my_clip = my_clip.loop(duration=audio_duration)
+    final_clip = my_clip.set_audio(audio_background)
+    final_clip.write_videofile(out_path, fps, "libx264")
+
+
+# The video download settings/options
+ydl_opts = {
+    'format': 'bestaudio/best',
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'wav',
+        'preferredquality': '192',
+    }],
+    'logger': MyLogger(),
+    'progress_hooks': [my_hook],
+    'outtmpl': 'audio_files/%(id)s.%(ext)s',
+    # 'writeinfojson' # Use this if we want to write to a JSON and store it in a database
+}
+
 # Spotify Keys
 cid = "74386c8bfb28461aa7a25a760d22a099"
 secret = "1b69f47c3b094314ae7af4034412714c"
@@ -167,6 +181,7 @@ secret = "1b69f47c3b094314ae7af4034412714c"
 client_credentials_manager = SpotifyClientCredentials(
     client_id=cid, client_secret=secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
+
 
 # Spotify Playlist URIs
 TOP_50_URI = "37i9dQZEVXbNG2KDcFcKOF"
@@ -184,64 +199,30 @@ beats_library = {
     "85BPM": {"file_name": "85BPM.mp3", "bpm": 85},
 }
 
-track_uris = [x["track"]["uri"]
-              for x in sp.playlist_tracks(CURRENT_PLAYLIST_URI)["items"]]  # List of track URIs
-# print(track_uris)
-# print("\n\n")
-
-top_fifty_tracks = []
-five_rand_tracks = []
+tracks_list = []
+rand_selected_tracks = []
 tracks_data_struct = {}
 
 for track in sp.playlist_tracks(CURRENT_PLAYLIST_URI)["items"]:
-
-    # Track name
-    # print(track["track"])
     track_name = track["track"]["name"]
-    # print(track_name)
-
-    # Main Artist
-    #  artist_uri = track["track"]["artists"][0]["uri"]
-    #  artist_info = sp.artist(artist_uri)
-    # print(artist_info)
-
-    # Name, popularity, genre
     artist_name = track["track"]["artists"][0]["name"]
-    # artist_genres = artist_info["genres"]
-    # print(artist_name)
-    # print(artist_genres)
-
-    # Popularity of the track
-    # track_pop = track["track"]["popularity"]
-    # print(track_pop)
-
-    top_fifty_tracks.append(replaceInvalidChars(
+    tracks_list.append(replaceInvalidChars(
         f"{track_name} by {artist_name}"))
-    # print("\n\n")
 
-for i, track in enumerate(top_fifty_tracks, start=1):
+# List all the tracks in the chosen playlist
+for i, track in enumerate(tracks_list, start=1):
     print(f"Track {i}: {track}")
 print("\n")
 
-for i in range(1, 6):
-    rand_track = top_fifty_tracks.pop(random.randrange(len(top_fifty_tracks)))
-    five_rand_tracks.append(rand_track)
+# Select 5 random tracks
+print("CHOSEN TRACKS: ")
+for i in range(1, 2):
+    rand_track = tracks_list.pop(random.randrange(len(tracks_list)))
+    rand_selected_tracks.append(rand_track)
+    print(f"Track {i}: {rand_track}")
 print("\n")
 
-# FOR TESTING PURPOSES:
-# five_rand_tracks.append("not-the-only-one-by-sam-smith")
-# five_rand_tracks.append("too-good-at-goodbyes-by-sam-smith")
-# five_rand_tracks.append("stereo-hearts-by-gym-class-heroes")
-# five_rand_tracks.append("positions-by-ariana-grande")
-# five_rand_tracks.append("4-your-eyes-only-by-j.cole")
-# five_rand_tracks.append("doomsday-by-mf-doom")
-
-print("CHOSEN 5 TRACKS: ")
-for i, track in enumerate(five_rand_tracks, start=1):
-    print(f"Track {i}: {track}")
-print("\n")
-
-for i, track in enumerate(five_rand_tracks, start=1):
+for i, track in enumerate(rand_selected_tracks, start=1):
     print(f"Currently Downloading Track {i}: {track}")
 
     # Obtain the YouTube link of each of the five tracks
@@ -264,6 +245,7 @@ for i, track in enumerate(five_rand_tracks, start=1):
 # Navigate to the output directory
 os.chdir("output")
 
+# Rename generated files and folders with id names to correct titles
 for track in tracks_data_struct:
     yt_id = tracks_data_struct[track]['id']
     for filename in os.listdir():
@@ -277,7 +259,7 @@ for track in tracks_data_struct:
             os.rename(filename, track)
 print("\n")
 
-# Calculate the BPM for each track and add to data struct
+# Calculate the BPM for each track and add to data structure
 print("Calculating BPM...")
 for track in tracks_data_struct:
     current_file = f"{track}.wav"
@@ -288,25 +270,42 @@ for track in tracks_data_struct:
 print(tracks_data_struct)
 print("\n")
 
-# Select a beat...
+# Select one beat to use
 chosen_beat = random.choice(list(beats_library.keys()))
 print(f"Selected beat: {beats_library[chosen_beat]['file_name']}")
 lofi_beat = (AudioSegment.from_file(
-    f"../beats_library/{beats_library[chosen_beat]['file_name']}") * 10) - 3
+    f"../beats_library/{beats_library[chosen_beat]['file_name']}") * 10) - 5
 beat_bpm = beats_library[chosen_beat]['bpm']
 
-# Slow vocals accordingly
+os.chdir("..")
+
+# Generate slowed vocals and combine with
 print("Slowing vocals...")
 for track in tracks_data_struct:
-    vocals = AudioSegment.from_file(f"./{track}/vocals.wav") - 15
+    vocals = AudioSegment.from_file(f"./output/{track}/vocals.wav") - 10
     song_bpm = tracks_data_struct[track]["bpm"]
 
     # Slow the vocals to achieve the same bpm as the beat
     slow_vocals = speed_change(vocals, beat_bpm / song_bpm)
-    slow_vocals.export(f"./{track}/slow_vocals.mp3", format="mp3")
+    slow_vocals.export(f"./output/{track}/slow_vocals.mp3", format="mp3")
 
     # Create the track by overlaying the beat over the slow vocals
+    final_audio_name = f"if {track.replace('-',' ')} was lofi.mp3"
+    final_audio_path = f"./output/{track}/{final_audio_name}"
+
+    bg_video_name = "waterfall_background.mp4"
+    bg_video_path = f"./background/{bg_video_name}"
+
+    final_video_name = f"if {track.replace('-',' ')} was lofi.mp4"
+    final_video_path = f"./videos/{final_video_name}"
+
     lofi_track = slow_vocals.overlay(lofi_beat, position=0)
     lofi_track = lofi_track.fade_in(1000).fade_out(3000)
-    lofi_track.export(
-        f"./{track}/if {track.replace('-',' ')} was lofi.mp3", format="mp3")
+    lofi_track.export(final_audio_path, format="mp3")
+
+    # Combine the lofi vocals with the visuals
+    print(f"background video path: {bg_video_path}")
+    print(f"final audio path: {final_audio_path}")
+    print(f"final video path: {final_video_path}")
+
+    combine_audio_and_video(bg_video_path, final_audio_path, final_video_path)

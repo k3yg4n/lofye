@@ -11,7 +11,7 @@ OUTRO_TIME_IN_SECONDS = 5
 FPS = 60
 
 
-def combine(vid_path, aud_path, out_path, fps=FPS):
+def combine_audio_and_video(vid_path, aud_path, out_path, fps=FPS):
     audio_background = mpe.AudioFileClip(aud_path)
     audio_duration = audio_background.duration + OUTRO_TIME_IN_SECONDS
     my_clip = mpe.VideoFileClip(vid_path)
@@ -20,4 +20,4 @@ def combine(vid_path, aud_path, out_path, fps=FPS):
     final_clip.write_videofile(out_path, fps=fps)
 
 
-combine(src_file_path, audio_file_path, dest_file_path)
+combine_audio_and_video(src_file_path, audio_file_path, dest_file_path)
