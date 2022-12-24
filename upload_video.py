@@ -10,7 +10,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request 
+from google.auth.transport.requests import Request
 import os
 
 # Explicitly tell the underlying HTTP transport library not to retry, since we are handling retry logic ourselves.
@@ -30,7 +30,7 @@ RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
 CLIENT_SECRETS_FILE = 'client_secret.json'
 
-#youtube access
+# youtube access
 SCOPES = ['https://www.googleapis.com/auth/youtube.upload']
 API_SERVICE_NAME = 'youtube'
 API_VERSION = 'v3'
@@ -38,8 +38,8 @@ API_VERSION = 'v3'
 VALID_PRIVACY_STATUSES = ('public', 'private', 'unlisted')
 
 
-#YOUTUBE AUTHENICATION
-credentials = None 
+# YOUTUBE AUTHENICATION
+credentials = None
 
 # token.pickle stores the user's credentials from previously successful logins, loads in credentials if it already exists
 if os.path.exists('token.pickle'):
@@ -70,7 +70,9 @@ if not credentials or not credentials.valid:
             print('Saving Credentials for Future Use...')
             pickle.dump(credentials, f)
 
-#YOUTUBE UPLOAD 
+# YOUTUBE UPLOAD
+
+
 def initialize_upload(youtube, options):
     tags = None
     if options.keywords:
@@ -147,7 +149,8 @@ def resumable_upload(request):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--file', required=True, help='Video file to upload')
-    parser.add_argument('--title', help='Video title', default='Test Title - Mewzaki')
+    parser.add_argument('--title', help='Video title',
+                        default='Test Title - Mewzaki')
     parser.add_argument('--description', help='Video description',
                         default='Test Description')
     parser.add_argument('--category', default='10',
@@ -165,11 +168,3 @@ if __name__ == '__main__':
         initialize_upload(youtube, args)
     except HttpError as e:
         print('An HTTP error %d occurred:\n%s' % e.resp.status, e.content)
-
-
-# python upload_video.py --file="/tmp/test_video_file.flv"
-#                        --title="Summer vacation in California"
-#                        --description="Had fun surfing in Santa Cruz"
-#                        --keywords="surfing,Santa Cruz"
-#                        --category="22"
-#                        --privacyStatus="private"

@@ -1,5 +1,7 @@
-audio_files/
+audio_files_input/
 audio_output/
 video_output/
 .cache
 .env
+client_secret.json
+token.pickle

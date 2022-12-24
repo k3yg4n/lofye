@@ -13,7 +13,6 @@ import yt_dlp
 
 # For vocal separation
 from moviepy.editor import *
-from tkinter.filedialog import *
 import os
 
 # For string manipulations
@@ -65,7 +64,7 @@ def download_audio(yt_url):
 
 
 def removeBackgroundFromAudioFile(file_name):
-    file_path = f"./audio_files/{file_name}.wav"
+    file_path = f"./audio_files_input/{file_name}.wav"
     audio = AudioFileClip(file_path)
     audio.write_audiofile(f'./audio_output/{file_name}.wav')
     os.system(
@@ -173,7 +172,7 @@ ydl_opts = {
     }],
     'logger': MyLogger(),
     'progress_hooks': [my_hook],
-    'outtmpl': 'audio_files/%(id)s.%(ext)s',
+    'outtmpl': 'audio_files_input/%(id)s.%(ext)s',
     # 'writeinfojson' # Use this if we want to write to a JSON and store it in a database
 }
 
@@ -195,7 +194,7 @@ LYRICAL_RAP_URI = "1tK3uHXK80UfIOjPdDxkiQ"
 EIGHTY_BPM_URI = "2Cxy4eFOnkDpWA7je1VIAZ"
 JAZZ_RAP_URI = "37i9dQZF1DX8Kgdykz6OKj"
 
-CURRENT_PLAYLIST_URI = JAZZ_RAP_URI
+CURRENT_PLAYLIST_URI = EIGHTY_BPM_URI
 
 # Beats Library
 beats_library = {
@@ -301,17 +300,21 @@ for track in tracks_data_struct:
     bg_video_name = "lofi_background.mp4"
     bg_video_path = f"./background/{bg_video_name}"
 
-    final_video_name = f"if {track.replace('-',' ')} was lofi.mp4"
-    final_video_path = f"./video_output/{final_video_name}"
+    final_video_name = f"if {track.replace('-',' ')} was lofi"
+    final_video_path = f"./video_output/{final_video_name}.mp4"
 
     lofi_track = slow_vocals.overlay(lofi_beat, position=0)
     lofi_track = lofi_track.fade_in(1000).fade_out(3000)
     lofi_track.export(final_audio_path, format="mp3")
 
     # Combine the lofi vocals with the visuals
-    print(f"background video path: {bg_video_path}")
-    print(f"final audio path: {final_audio_path}")
-    print(f"final video path: {final_video_path}")
-
     combine_audio_and_video(bg_video_path, final_audio_path, final_video_path)
-    os.system("python upload_video.py --file='./video_output/if it runs through me by tom misch was lofi.mp4' --title='lo-fi test1' --description='I love music 123' --keywords='music, lofi' --category='22' --privacyStatus='private'")
+    os.system(
+        f'python upload_video.py'
+        f' --file="{final_video_path}"'
+        f' --title="{final_video_name} - mewzaki♫"'
+        f' --description="♫{final_video_name}♫"'
+        f' --keywords="music, lofi"'
+        f' --category="22"'
+        f' --privacyStatus="public"'
+    )
