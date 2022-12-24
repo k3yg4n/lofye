@@ -282,7 +282,7 @@ os.chdir("..")
 # Generate slowed vocals and combine with
 print("Slowing vocals...")
 for track in tracks_data_struct:
-    vocals = AudioSegment.from_file(f"./output/{track}/vocals.wav") - 10
+    vocals = AudioSegment.from_file(f"./output/{track}/vocals.wav") - 5
     song_bpm = tracks_data_struct[track]["bpm"]
 
     # Slow the vocals to achieve the same bpm as the beat
