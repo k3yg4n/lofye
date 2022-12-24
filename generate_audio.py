@@ -298,7 +298,7 @@ for track in tracks_data_struct:
     final_audio_name = f"if {track.replace('-',' ')} was lofi.mp3"
     final_audio_path = f"./audio_output/{track}/{final_audio_name}"
 
-    bg_video_name = "waterfall_background.mp4"
+    bg_video_name = "lofi_background.mp4"
     bg_video_path = f"./background/{bg_video_name}"
 
     final_video_name = f"if {track.replace('-',' ')} was lofi.mp4"
@@ -314,3 +314,4 @@ for track in tracks_data_struct:
     print(f"final video path: {final_video_path}")
 
     combine_audio_and_video(bg_video_path, final_audio_path, final_video_path)
+    os.system("python upload_video.py --file='./video_output/if it runs through me by tom misch was lofi.mp4' --title='lo-fi test1' --description='I love music 123' --keywords='music, lofi' --category='22' --privacyStatus='private'")
