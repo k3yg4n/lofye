@@ -30,9 +30,6 @@ from pydub import AudioSegment
 # Combine audio with background video
 import moviepy.editor as mpe
 
-# To store and access sensitive credentials such as keys and tokens
-from dotenv import load_dotenv
-
 OUTRO_TIME_IN_SECONDS = 5
 FPS = 60
 
@@ -163,7 +160,7 @@ def combine_audio_and_video(vid_path, aud_path, out_path, fps=FPS):
     final_clip.write_videofile(out_path, fps, "libx264")
 
 
-# Video download settings/options
+# The video download settings/options
 ydl_opts = {
     'format': 'bestaudio/best',
     'postprocessors': [{
@@ -177,10 +174,9 @@ ydl_opts = {
     # 'writeinfojson' # Use this if we want to write to a JSON and store it in a database
 }
 
-# Import required credentials (keys and tokens)
-load_dotenv()
-cid = os.getenv('cid')
-secret = os.getenv('secret')
+# Spotify Keys
+cid = "74386c8bfb28461aa7a25a760d22a099"
+secret = "1b69f47c3b094314ae7af4034412714c"
 
 # Spotify Authentication - without user
 client_credentials_manager = SpotifyClientCredentials(
@@ -247,7 +243,7 @@ for i, track in enumerate(rand_selected_tracks, start=1):
 
     print("\n")
 
-# Navigate to the audio_output directory
+# Navigate to the output directory
 os.chdir("audio_output")
 
 # Rename generated files and folders with id names to correct titles
