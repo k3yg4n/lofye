@@ -30,6 +30,9 @@ from pydub import AudioSegment
 # Combine audio with background video
 import moviepy.editor as mpe
 
+# Access and store sensitive credentials (keys and tokens)
+from dotenv import load_dotenv
+
 OUTRO_TIME_IN_SECONDS = 5
 FPS = 60
 
@@ -174,9 +177,10 @@ ydl_opts = {
     # 'writeinfojson' # Use this if we want to write to a JSON and store it in a database
 }
 
-# Spotify Keys
-cid = "74386c8bfb28461aa7a25a760d22a099"
-secret = "1b69f47c3b094314ae7af4034412714c"
+# Load credentials and tokens
+load_dotenv()
+cid = os.getenv('cid')
+secret = os.getenv('secret')
 
 # Spotify Authentication - without user
 client_credentials_manager = SpotifyClientCredentials(
