@@ -1,5 +1,4 @@
 audio_files/
-output/
-njtest/
-videos/
+audio_output/
+video_output/
 .cache

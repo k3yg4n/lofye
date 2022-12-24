@@ -30,6 +30,9 @@ from pydub import AudioSegment
 # Combine audio with background video
 import moviepy.editor as mpe
 
+# To store and access sensitive credentials such as keys and tokens
+from dotenv import load_dotenv
+
 OUTRO_TIME_IN_SECONDS = 5
 FPS = 60
 
@@ -64,8 +67,9 @@ def download_audio(yt_url):
 def removeBackgroundFromAudioFile(file_name):
     file_path = f"./audio_files/{file_name}.wav"
     audio = AudioFileClip(file_path)
-    audio.write_audiofile(f'./output/{file_name}.wav')
-    os.system(f'spleeter separate ./output/{file_name}.wav -o output')
+    audio.write_audiofile(f'./audio_output/{file_name}.wav')
+    os.system(
+        f'spleeter separate ./audio_output/{file_name}.wav -o audio_output')
 
 
 def replaceInvalidChars(file_name):
@@ -159,7 +163,7 @@ def combine_audio_and_video(vid_path, aud_path, out_path, fps=FPS):
     final_clip.write_videofile(out_path, fps, "libx264")
 
 
-# The video download settings/options
+# Video download settings/options
 ydl_opts = {
     'format': 'bestaudio/best',
     'postprocessors': [{
@@ -173,9 +177,10 @@ ydl_opts = {
     # 'writeinfojson' # Use this if we want to write to a JSON and store it in a database
 }
 
-# Spotify Keys
-cid = "74386c8bfb28461aa7a25a760d22a099"
-secret = "1b69f47c3b094314ae7af4034412714c"
+# Import required credentials (keys and tokens)
+load_dotenv()
+cid = os.getenv('cid')
+secret = os.getenv('secret')
 
 # Spotify Authentication - without user
 client_credentials_manager = SpotifyClientCredentials(
@@ -242,8 +247,8 @@ for i, track in enumerate(rand_selected_tracks, start=1):
 
     print("\n")
 
-# Navigate to the output directory
-os.chdir("output")
+# Navigate to the audio_output directory
+os.chdir("audio_output")
 
 # Rename generated files and folders with id names to correct titles
 for track in tracks_data_struct:
@@ -282,22 +287,22 @@ os.chdir("..")
 # Generate slowed vocals and combine with
 print("Slowing vocals...")
 for track in tracks_data_struct:
-    vocals = AudioSegment.from_file(f"./output/{track}/vocals.wav") - 5
+    vocals = AudioSegment.from_file(f"./audio_output/{track}/vocals.wav") - 5
     song_bpm = tracks_data_struct[track]["bpm"]
 
     # Slow the vocals to achieve the same bpm as the beat
     slow_vocals = speed_change(vocals, beat_bpm / song_bpm)
-    slow_vocals.export(f"./output/{track}/slow_vocals.mp3", format="mp3")
+    slow_vocals.export(f"./audio_output/{track}/slow_vocals.mp3", format="mp3")
 
     # Create the track by overlaying the beat over the slow vocals
     final_audio_name = f"if {track.replace('-',' ')} was lofi.mp3"
-    final_audio_path = f"./output/{track}/{final_audio_name}"
+    final_audio_path = f"./audio_output/{track}/{final_audio_name}"
 
     bg_video_name = "waterfall_background.mp4"
     bg_video_path = f"./background/{bg_video_name}"
 
     final_video_name = f"if {track.replace('-',' ')} was lofi.mp4"
-    final_video_path = f"./videos/{final_video_name}"
+    final_video_path = f"./video_output/{final_video_name}"
 
     lofi_track = slow_vocals.overlay(lofi_beat, position=0)
     lofi_track = lofi_track.fade_in(1000).fade_out(3000)
