@@ -8,7 +8,6 @@ import random
 from youtubesearchpython import VideosSearch
 
 # For downloading mp3s
-# import youtube_dl
 import yt_dlp
 
 # For vocal separation
@@ -32,9 +31,6 @@ import moviepy.editor as mpe
 # Access and store sensitive credentials (keys and tokens)
 from dotenv import load_dotenv
 
-OUTRO_TIME_IN_SECONDS = 5
-FPS = 60
-
 
 class MyLogger(object):
     def debug(self, msg):
@@ -52,13 +48,12 @@ def my_hook(d):
         print('Done downloading, now converting ...')
 
 
+# CHANGE TO USE YT_DLP subprocess call instead
 def download_audio(yt_url):
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    with yt_dlp.YoutubeDL(YDL_OPTS) as ydl:
         video_info = ydl.extract_info(url=yt_url, download=False)
         filename = f"{video_info['id']}.wav"
         print(f"DOWNLOADING {filename}...")
-        # print(f"DURATION: {video_info['duration']} seconds")
-        # print(list(video_info)) # TO SEE FIELDS WE CAN READ...
         ydl.download([yt_url])
         return video_info['id']
 
@@ -153,28 +148,14 @@ def speed_change(sound, speed=1.0):
     return sound_with_altered_frame_rate.set_frame_rate(sound.frame_rate)
 
 
-def combine_audio_and_video(vid_path, aud_path, out_path, fps=FPS):
+def combine_audio_and_video(vid_path, aud_path, out_path, outro_seconds, fps=60):
     audio_background = mpe.AudioFileClip(aud_path)
-    audio_duration = audio_background.duration + OUTRO_TIME_IN_SECONDS
+    audio_duration = audio_background.duration + outro_seconds
     my_clip = mpe.VideoFileClip(vid_path)
     my_clip = my_clip.loop(duration=audio_duration)
     final_clip = my_clip.set_audio(audio_background)
     final_clip.write_videofile(out_path, fps, "libx264")
 
-
-# The video download settings/options
-ydl_opts = {
-    'format': 'bestaudio/best',
-    'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'wav',
-        'preferredquality': '192',
-    }],
-    'logger': MyLogger(),
-    'progress_hooks': [my_hook],
-    'outtmpl': 'audio_files_input/%(id)s.%(ext)s',
-    # 'writeinfojson' # Use this if we want to write to a JSON and store it in a database
-}
 
 # Load credentials and tokens
 load_dotenv()
@@ -185,7 +166,6 @@ secret = os.getenv('secret')
 client_credentials_manager = SpotifyClientCredentials(
     client_id=cid, client_secret=secret)
 sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
-
 
 # Spotify Playlist URIs
 TOP_50_URI = "37i9dQZEVXbNG2KDcFcKOF"
@@ -203,6 +183,19 @@ beats_library = {
     "85BPM": {"file_name": "85BPM.mp3", "bpm": 85},
 }
 
+# The youtube video download options
+YDL_OPTS = {
+    'format': 'bestaudio/best',
+    'postprocessors': [{
+        'key': 'FFmpegExtractAudio',
+        'preferredcodec': 'wav',
+        'preferredquality': '192',
+    }],
+    'logger': MyLogger(),
+    'progress_hooks': [my_hook],
+    'outtmpl': 'audio_files_input/%(id)s.%(ext)s',
+}
+
 tracks_list = []
 rand_selected_tracks = []
 tracks_data_struct = {}
@@ -213,14 +206,9 @@ for track in sp.playlist_tracks(CURRENT_PLAYLIST_URI)["items"]:
     tracks_list.append(replaceInvalidChars(
         f"{track_name} by {artist_name}"))
 
-# List all the tracks in the chosen playlist
-for i, track in enumerate(tracks_list, start=1):
-    print(f"Track {i}: {track}")
-print("\n")
-
-# Select 5 random tracks
+# Select 2 random tracks
 print("CHOSEN TRACKS: ")
-for i in range(1, 2):
+for i in range(1, 3):
     rand_track = tracks_list.pop(random.randrange(len(tracks_list)))
     rand_selected_tracks.append(rand_track)
     print(f"Track {i}: {rand_track}")
@@ -283,7 +271,7 @@ beat_bpm = beats_library[chosen_beat]['bpm']
 
 os.chdir("..")
 
-# Generate slowed vocals and combine with
+# Generate slowed vocals and combine with beat
 print("Slowing vocals...")
 for track in tracks_data_struct:
     vocals = AudioSegment.from_file(f"./audio_output/{track}/vocals.wav") - 5
@@ -308,12 +296,13 @@ for track in tracks_data_struct:
     lofi_track.export(final_audio_path, format="mp3")
 
     # Combine the lofi vocals with the visuals
-    combine_audio_and_video(bg_video_path, final_audio_path, final_video_path)
+    combine_audio_and_video(
+        bg_video_path, final_audio_path, final_video_path, 5)
     os.system(
         f'python upload_video.py'
         f' --file="{final_video_path}"'
         f' --title="{final_video_name} - mewzaki♫"'
-        f' --description="♫{final_video_name}♫"'
+        f' --description="♫ {final_video_name} ♫ https://github.com/k3yg4n/mewzaki"'
         f' --keywords="music, lofi"'
         f' --category="22"'
         f' --privacyStatus="public"'
