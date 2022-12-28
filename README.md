@@ -1,5 +1,4 @@
-# ♫ mewzaki ♫ 
-- a lofi generation script
+# ♫ mewzaki ♫ - a lofi generation script
 
 ![YouTube Channel Image](https://user-images.githubusercontent.com/91648600/209746946-f24ae679-7f10-4071-b538-bdfcf1a215f2.png)
 A script that automatically creates lo-fi variants of randomly selected songs in a Spotify playlist and uploads them to the [mewzaki YouTube channel](https://www.youtube.com/@mewzaki "mewzaki YouTube"). For best results, select songs that have around 80 BPM to avoid excessive distortion.
