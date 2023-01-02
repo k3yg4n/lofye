@@ -1,7 +1,7 @@
-# mewzaki
-
-![YouTube Channel Image]https://user-images.githubusercontent.com/91648600/209746946-f24ae679-7f10-4071-b538-bdfcf1a215f2.png)
+# ♫ mewzaki ♫ - a lofi generation script
 A script that automatically creates lo-fi variants of randomly selected songs in a Spotify playlist and uploads them to the [mewzaki YouTube channel](https://www.youtube.com/@mewzaki "mewzaki YouTube"). For best results, select songs that have around 80 BPM to avoid excessive distortion.
+
+![YouTube Channel Image](https://user-images.githubusercontent.com/91648600/209746946-f24ae679-7f10-4071-b538-bdfcf1a215f2.png)
 
 ## How does it work?
 
@@ -15,7 +15,6 @@ A script that automatically creates lo-fi variants of randomly selected songs in
 8. Overlay the transformed vocals on top of the lofi-beat using `pydub` and write the final audio to a new mp3 file.
 9. Combine the audio and the background video using `moviepy`.
 10. Upload the video to the _mewzaki_ YouTube channel using `google_auth` related API.
-11. Iterate through the files generated throughout steps 1-10 and delete to free up space.
 
 ## Next steps
 
